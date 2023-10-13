@@ -2,13 +2,8 @@
 import math
 
 from pico2d import load_image, get_time
-from sdl2 import SDL_KEYDOWN, SDLK_SPACE, SDL_KEYUP, SDLK_RIGHT, SDLK_LEFT, SDLK_a
+from sdl2 import SDL_KEYDOWN, SDL_KEYUP, SDLK_RIGHT, SDLK_LEFT, SDLK_c, SDLK_x
 
-
-def space_down(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_SPACE
-def time_out(e):
-    return e[0] == 'TIME_OUT'
 
 def right_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_RIGHT
@@ -19,8 +14,14 @@ def left_down(e):
 def left_up(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYUP and e[1].key == SDLK_LEFT
 
-def a_down(e):
-    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_a
+
+def c_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_c
+def x_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_x
+
+def time_out(e):
+    return e[0] == 'TIME_OUT'
 
 def FramePlus(player, frame):
     if player.count % 10 == 0:
@@ -33,7 +34,6 @@ def FramePlus(player, frame):
 class Idle:
     @staticmethod
     def enter(player, e):
-        player.image = load_image('Resource/Character/Idle.png')
         player.count = 0
         player.frame = 0
         player.start_time = get_time()
@@ -44,20 +44,27 @@ class Idle:
 
     @staticmethod
     def do(player):
+        if player.jump == False:
+            player.image = load_image('Resource/Character/Idle.png')
         FramePlus(player, 11)
 
     @staticmethod
     def draw(player):
-        if (player.dir > 0):
-            player.image.clip_draw(player.frame * 99, 0, 99, 180, player.x, player.y)
-        elif (player.dir < 0):
-            player.image.clip_composite_draw(player.frame * 99, 0, 99, 180, 0, 'h', player.x, player.y, 99, 180)
+        if player.jump:
+            if (player.dir > 0):
+                player.image.clip_draw(0, 0, 96, 197, player.x, player.y)
+            elif (player.dir < 0):
+                player.image.clip_composite_draw(0, 0, 96, 197, 0, 'h', player.x, player.y, 96, 197)
+        else:
+            if (player.dir > 0):
+                player.image.clip_draw(player.frame * 99, 0, 99, 180, player.x, player.y)
+            elif (player.dir < 0):
+                player.image.clip_composite_draw(player.frame * 99, 0, 99, 180, 0, 'h', player.x, player.y, 99, 180)
 
 
 class Run:
     @staticmethod
     def enter(player, e):
-        player.image = load_image('Resource/Character/Walk.png')
         if right_down(e) or left_up(e):  # 오른쪽으로 RUN
             player.dir = 1
         elif left_down(e) or right_up(e):  # 왼쪽으로 RUN
@@ -67,15 +74,23 @@ class Run:
         pass
     @staticmethod
     def do(player):
+        if player.jump == False:
+            player.image = load_image('Resource/Character/Walk.png')
         FramePlus(player, 8)
         player.x += player.dir * 5
         pass
     @staticmethod
     def draw(player):
-        if(player.dir > 0):
-            player.image.clip_draw(player.frame * 101, 0, 101, 177, player.x, player.y)
-        elif(player.dir < 0):
-            player.image.clip_composite_draw(player.frame * 101, 0, 101, 177,0, 'h', player.x, player.y, 101, 177)
+        if player.jump:
+            if (player.dir > 0):
+                player.image.clip_draw(0, 0, 96, 197, player.x, player.y)
+            elif (player.dir < 0):
+                player.image.clip_composite_draw(0, 0, 96, 197, 0, 'h', player.x, player.y, 96, 197)
+        else:
+            if(player.dir > 0):
+                player.image.clip_draw(player.frame * 101, 0, 101, 177, player.x, player.y)
+            elif(player.dir < 0):
+                player.image.clip_composite_draw(player.frame * 101, 0, 101, 177,0, 'h', player.x, player.y, 101, 177)
 
 
 class StateMachine:
@@ -108,10 +123,12 @@ class StateMachine:
 class Player:
     def __init__(self):
         self.x, self.y = 400, 90
+        self.g = -0.1
         self.dir = 1
         self.count = 0
         self.frame = 0
         self.start_time = 0
+        self.jump = False
         self.image = load_image('Resource/Character/Idle.png')
         self.state_machine = StateMachine(self)
         self.state_machine.start()

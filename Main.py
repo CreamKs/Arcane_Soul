@@ -1,5 +1,6 @@
 from pico2d import *
 from Player import Player
+from Gravity import Gravity_World
 
 # Game object class here
 Width = 1920
@@ -7,6 +8,7 @@ Height = 1080
 
 def handle_events():
     global running
+    global player
 
     events = get_events()
     for event in events:
@@ -14,6 +16,11 @@ def handle_events():
             running = False
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
             running = False
+        elif event.type == SDL_KEYDOWN and event.key == SDLK_c:
+            player.jump = True
+            player.image = load_image('Resource/Character/Jump.png')
+            player.y += 5
+            player.g = -0.5
         else:
             player.handle_event(event)
 
@@ -39,6 +46,7 @@ def reset_world():
 
 def update_world():
     for o in world:
+        Gravity_World(o)
         o.update()
     pass
 
