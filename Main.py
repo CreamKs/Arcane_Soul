@@ -1,4 +1,6 @@
 from pico2d import *
+
+import game_world
 from Player import Player
 from Gravity import Gravity_World
 
@@ -16,50 +18,36 @@ def handle_events():
             running = False
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
             running = False
-        elif event.type == SDL_KEYDOWN and event.key == SDLK_c:
-            player.jump = True
-            player.image = load_image('Resource/Character/Jump.png')
-            player.y += 5
-            player.g = -0.5
         else:
             player.handle_event(event)
 
 
 
-def reset_world():
+def create_world():
     global running
     global grass
     global team
-    global world
     global player
 
     running = True
-    world = []
-
-    # grass = Grass()
-    # world.append(grass)
 
     player = Player()
-    world.append(player)
+    game_world.add_object(player, 1)
 
 
 
 def update_world():
-    for o in world:
-        Gravity_World(o)
-        o.update()
-    pass
+    game_world.update()
 
 
 def render_world():
     clear_canvas()
-    for o in world:
-        o.draw()
+    game_world.render()
     update_canvas()
 
 
 open_canvas(Width, Height)
-reset_world()
+create_world()
 # game loop
 while running:
     handle_events()
