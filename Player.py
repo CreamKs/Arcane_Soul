@@ -220,12 +220,9 @@ class StateMachine:
             # Attack1: {},
             # Attack2: {},
             # Attack3: {},
-            # ShowBow: {},
-            # JumpShowBow: {},
             # Dead: {},
             # Skill1: {},
-            # Skill2: {},
-            # Skill3: {}
+            # Skill2: {}
         }
 
     def start(self):
