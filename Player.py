@@ -5,7 +5,7 @@ from pico2d import get_time, load_image, SDL_KEYDOWN, SDL_KEYUP, SDLK_SPACE, SDL
 import Gravity
 import game_framework
 import game_world
-from sdl2 import SDLK_c
+from sdl2 import SDLK_c, SDLK_x
 
 
 # state event check
@@ -29,10 +29,16 @@ def left_up(e):
 def c_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_c
 
+def x_down(e):
+    return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_x
+
 def jump_end(e):
     return e[0] == 'JUMP_END'
 
-# time_out = lambda e : e[0] == 'TIME_OUT'
+
+time_out = lambda e : e[0] == 'TIME_OUT'
+next_attack = lambda e : e[0] == 'TIME_OUT'
+
 
 PIXEL_PER_METER = (10.0 / 0.3) # 10 pixel 30 cm
 RUN_SPEED_KMPH = 20.0 # Km / Hour
@@ -42,21 +48,9 @@ RUN_SPEED_PPS = (RUN_SPEED_MPS * PIXEL_PER_METER)
 
 # Player Jump Speed
 
-PIXEL_PER_METER = (10.0 / 0.3) # 10 pixel 30 cm
-JUMP_SPEED_MPS = 0
-JUMP_SPEED_PPS = (JUMP_SPEED_MPS * PIXEL_PER_METER)
-
 # Gravity
 
-PIXEL_PER_METER = (10.0 / 0.3) # 10 pixel 30 cm
-GRAVITY_ACCELERATION = 9.8
-GRAVITY_TIME = 0
-GRAVITY_SPEED_MPS = GRAVITY_TIME * GRAVITY_ACCELERATION
-GRAVITY_SPEED_PPS = (GRAVITY_SPEED_MPS * PIXEL_PER_METER)
-GRAVITY_SPEED_MAX = 200.0
-
 # Boy Action Speed
-# fill here
 
 TIME_PER_ACTION = 0.5
 ACTION_PER_TIME = 0.5 / TIME_PER_ACTION
@@ -84,7 +78,8 @@ class Idle:
     def exit(player, e):
         if c_down(e):
             player.jump = True
-            player.jump_power = 20
+            player.jump_power = -10
+            player.y += 10
         pass
 
     @staticmethod
@@ -120,8 +115,8 @@ class Run:
     def exit(player, e):
         if c_down(e):
             player.jump = True
+            player.jump_power = -10
             player.y += 10
-            player.jump_power = 100
             pass
 
     @staticmethod
@@ -142,12 +137,7 @@ class Run:
 class Jump:
     @staticmethod
     def enter(player, e):
-        global JUMP_SPEED_KMPH
-        global JUMP_SPEED_MPM
-        global JUMP_SPEED_MPS
-        global JUMP_SPEED_PPS
-        JUMP_SPEED_MPS = player.jump_power
-        JUMP_SPEED_PPS = (JUMP_SPEED_MPS * PIXEL_PER_METER)
+
         player.image = load_image('Resource\Character\Jump.png')
         if player.face_dir == -1:
             player.action = 2
@@ -164,8 +154,6 @@ class Jump:
         pass
     @staticmethod
     def do(player):
-        player.y += JUMP_SPEED_PPS * game_framework.frame_time
-
 
         if player.y < 90:
             player.jump = False
@@ -195,7 +183,8 @@ class JumpRun:
 
     @staticmethod
     def do(player):
-        if player.jump == False:
+        if player.y < 90:
+            player.jump = False
             player.state_machine.handle_event(('JUMP_END', 0))
         player.x += player.dir * RUN_SPEED_PPS * game_framework.frame_time
         pass
@@ -208,10 +197,48 @@ class JumpRun:
             player.image.clip_composite_draw(0, 0, 86, 180, 0, 'h', player.x, player.y, 86, 180)
 
 
+class Attack1:
+    @staticmethod
+    def enter(player, e):
+        global FRAMES_PER_ACTION
+        next_attack = False
+        FRAMES_PER_ACTION = 4
+
+        player.image = load_image('Resource\Character\Attack1.png')
+        if right_down(e) or left_up(e): # 오른쪽으로 RUN
+            player.dir, player.face_dir, player.action = 1, 1, 1
+        elif left_down(e) or right_up(e): # 왼쪽으로 RUN
+            player.dir, player.face_dir, player.action = -1, -1, 0
+
+    @staticmethod
+    def exit(player, e):
+            pass
+
+    @staticmethod
+    def do(player):
+        player.frame = (player.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 4
+
+
+        if player.frame == 3 :
+            if next_attack:
+                player.state_machine.handle_event(('TIME_OUT', 0))
+            else:
+                player.state_machine.handle_event(('NEXT_ATTACK', 0))
+
+        pass
+
+    @staticmethod
+    def draw(player):
+        if (player.face_dir == 1):
+            player.image.clip_draw(int(player.frame) * 101, 0, 101, 177, player.x, player.y)
+        if player.face_dir == -1:
+            player.image.clip_composite_draw(int(player.frame) * 101, 0, 101, 177, 0, 'h', player.x, player.y, 101, 177)
+
+
 class StateMachine:
     def __init__(self, player):
         self.player = player
-        self.cur_state = Jump
+        self.cur_state = Idle
         self.transitions = {
             Idle: {right_down: Run, left_down: Run, left_up: Run, right_up: Run, c_down: Jump},
             Run: {right_down: Idle, left_down: Idle, right_up: Idle, left_up: Idle, c_down: JumpRun},
@@ -256,7 +283,7 @@ class Player:
         self.frame = 0
         self.dir = 0
         self.face_dir = 1 # 오른쪽 방향
-        self.jump = True
+        self.jump = False
         self.jump_power = 0
         self.state_machine = StateMachine(self)
         self.state_machine.start()
