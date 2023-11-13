@@ -32,12 +32,15 @@ def c_down(e):
 def x_down(e):
     return e[0] == 'INPUT' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_x
 
+def attack_down(e):
+    return e[0] == 'ATTACK' and e[1].type == SDL_KEYDOWN and e[1].key == SDLK_x
+
 def jump_end(e):
     return e[0] == 'JUMP_END'
 
 
 time_out = lambda e : e[0] == 'TIME_OUT'
-next_attack = lambda e : e[0] == 'TIME_OUT'
+next_attack = lambda e : e[0] == 'NEXT_ATTACK'
 
 
 PIXEL_PER_METER = (10.0 / 0.3) # 10 pixel 30 cm
@@ -53,6 +56,8 @@ RUN_SPEED_PPS = (RUN_SPEED_MPS * PIXEL_PER_METER)
 # Boy Action Speed
 
 TIME_PER_ACTION = 0.5
+TIME_PER_ATTACK = 0.2
+
 ACTION_PER_TIME = 0.5 / TIME_PER_ACTION
 FRAMES_PER_ACTION = 8
 
@@ -91,9 +96,9 @@ class Idle:
     @staticmethod
     def draw(player):
         if player.face_dir == 1:
-            player.image.clip_draw(int(player.frame) * 99, 0, 99, 197, player.x, player.y)
+            player.image.clip_draw(int(player.frame) * 99, 0, 99, 197, player.x, player.y, 100, 181)
         if player.face_dir == -1:
-            player.image.clip_composite_draw(int(player.frame) * 99, 0, 99, 197, 0, 'h', player.x, player.y, 99, 197)
+            player.image.clip_composite_draw(int(player.frame) * 99, 0, 99, 197, 0, 'h', player.x, player.y, 100, 181)
 
 
 
@@ -201,9 +206,9 @@ class Attack1:
     @staticmethod
     def enter(player, e):
         global FRAMES_PER_ACTION
-        next_attack = False
         FRAMES_PER_ACTION = 4
-
+        player.frame = 0
+        player.attack = False
         player.image = load_image('Resource\Character\Attack1.png')
         if right_down(e) or left_up(e): # 오른쪽으로 RUN
             player.dir, player.face_dir, player.action = 1, 1, 1
@@ -216,23 +221,120 @@ class Attack1:
 
     @staticmethod
     def do(player):
-        player.frame = (player.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 4
-
-
-        if player.frame == 3 :
-            if next_attack:
-                player.state_machine.handle_event(('TIME_OUT', 0))
-            else:
+        player.frame = (player.frame + FRAMES_PER_ACTION * 0.5 / TIME_PER_ATTACK * game_framework.frame_time) % 4
+        if int(player.frame) == 3:
+            if player.attack:
                 player.state_machine.handle_event(('NEXT_ATTACK', 0))
+            else:
+                player.state_machine.handle_event(('TIME_OUT', 0))
 
         pass
 
     @staticmethod
     def draw(player):
-        if (player.face_dir == 1):
-            player.image.clip_draw(int(player.frame) * 101, 0, 101, 177, player.x, player.y)
+        if player.face_dir == 1:
+            player.image.clip_draw(int(player.frame) * 216, 0, 216, 181, player.x, player.y)
         if player.face_dir == -1:
-            player.image.clip_composite_draw(int(player.frame) * 101, 0, 101, 177, 0, 'h', player.x, player.y, 101, 177)
+            player.image.clip_composite_draw(int(player.frame) * 216, 0, 216, 181, 0, 'h', player.x, player.y, 216, 181)
+
+
+class Attack2:
+    @staticmethod
+    def enter(player, e):
+        global FRAMES_PER_ACTION
+        FRAMES_PER_ACTION = 4
+        player.attack = False
+        player.frame = 0
+        player.image = load_image('Resource\Character\Attack2.png')
+        if right_down(e) or left_up(e): # 오른쪽으로 RUN
+            player.dir, player.face_dir, player.action = 1, 1, 1
+        elif left_down(e) or right_up(e): # 왼쪽으로 RUN
+            player.dir, player.face_dir, player.action = -1, -1, 0
+
+    @staticmethod
+    def exit(player, e):
+            pass
+
+    @staticmethod
+    def do(player):
+        player.frame = (player.frame + FRAMES_PER_ACTION * 0.5 / TIME_PER_ATTACK * game_framework.frame_time) % 4
+
+        if int(player.frame) == 3:
+            if player.attack:
+                player.state_machine.handle_event(('NEXT_ATTACK', 0))
+            else:
+                player.state_machine.handle_event(('TIME_OUT', 0))
+        pass
+
+    @staticmethod
+    def draw(player):
+        if (player.face_dir == 1):
+            player.image.clip_draw(int(player.frame) * 215, 0, 215, 165, player.x, player.y- (181 - 175))
+        if player.face_dir == -1:
+            player.image.clip_composite_draw(int(player.frame) * 215, 0, 215, 165, 0, 'h', player.x, player.y - (181 - 175), 215, 165)
+
+
+class Attack3:
+    @staticmethod
+    def enter(player, e):
+        global FRAMES_PER_ACTION
+        FRAMES_PER_ACTION = 4
+        player.frame = 0
+        player.attack = False
+        player.image = load_image('Resource\Character\Attack3.png')
+        if right_down(e) or left_up(e): # 오른쪽으로 RUN
+            player.dir, player.face_dir, player.action = 1, 1, 1
+        elif left_down(e) or right_up(e): # 왼쪽으로 RUN
+            player.dir, player.face_dir, player.action = -1, -1, 0
+
+    @staticmethod
+    def exit(player, e):
+            pass
+
+    @staticmethod
+    def do(player):
+        player.frame = (player.frame + FRAMES_PER_ACTION * 0.5 / TIME_PER_ATTACK * game_framework.frame_time) % 4
+        if int(player.frame > 2):
+            player.x += player.face_dir * RUN_SPEED_PPS * game_framework.frame_time * 8
+
+        if int(player.frame) == 3:
+            if player.attack:
+                player.state_machine.handle_event(('NEXT_ATTACK', 0))
+            else:
+                player.state_machine.handle_event(('TIME_OUT', 0))
+        pass
+
+    @staticmethod
+    def draw(player):
+        if (player.face_dir == 1):
+            player.image.clip_draw(int(player.frame) * 181, 0, 181, 139, player.x, player.y - (181 - 150))
+        if player.face_dir == -1:
+            player.image.clip_composite_draw(int(player.frame) * 181, 0, 181, 139, 0, 'h', player.x, player.y - (181 - 150), 181, 139)
+
+
+class Dead:
+    @staticmethod
+    def enter(player, e):
+        player.image = load_image('Resource\Character\dead.png')
+        if right_down(e) or left_up(e):  # 오른쪽으로 RUN
+            player.dir, player.face_dir, player.action = 1, 1, 1
+        elif left_down(e) or right_up(e):  # 왼쪽으로 RUN
+            player.dir, player.face_dir, player.action = -1, -1, 0
+
+    @staticmethod
+    def exit(player, e):
+        pass
+
+    @staticmethod
+    def do(player):
+        pass
+
+    @staticmethod
+    def draw(player):
+        if (player.face_dir == 1):
+            player.image.clip_draw(int(player.frame) * 181, 0, 181, 139, player.x, player.y - (181 - 150))
+        if player.face_dir == -1:
+            player.image.clip_composite_draw(int(player.frame) * 181, 0, 181, 139, 0, 'h', player.x, player.y - (181 - 150), 181, 139)
 
 
 class StateMachine:
@@ -240,14 +342,14 @@ class StateMachine:
         self.player = player
         self.cur_state = Idle
         self.transitions = {
-            Idle: {right_down: Run, left_down: Run, left_up: Run, right_up: Run, c_down: Jump},
-            Run: {right_down: Idle, left_down: Idle, right_up: Idle, left_up: Idle, c_down: JumpRun},
+            Idle: {right_down: Run, left_down: Run, left_up: Run, right_up: Run, c_down: Jump, x_down: Attack1},
+            Run: {right_down: Idle, left_down: Idle, right_up: Idle, left_up: Idle, c_down: JumpRun, x_down: Attack1},
             Jump: {right_down: JumpRun, left_down: JumpRun, right_up: JumpRun, left_up: JumpRun, jump_end: Idle},
             JumpRun: {right_down: Jump, left_down: Jump, right_up: Jump, left_up: Jump, jump_end: Run},
-            # Attack1: {},
-            # Attack2: {},
-            # Attack3: {},
-            # Dead: {},
+            Attack1: {time_out: Idle, next_attack: Attack2},
+            Attack2: {time_out: Idle, next_attack: Attack3},
+            Attack3: {time_out: Idle},
+            Dead: {},
             # Skill1: {},
             # Skill2: {}
         }
@@ -262,9 +364,10 @@ class StateMachine:
     def handle_event(self, e):
         for check_event, next_state in self.transitions[self.cur_state].items():
             if check_event(e):
-                self.cur_state.exit(self.player, e)
-                self.cur_state = next_state
-                self.cur_state.enter(self.player, e)
+                if not e[0] == 'ATTACK':
+                    self.cur_state.exit(self.player, e)
+                    self.cur_state = next_state
+                    self.cur_state.enter(self.player, e)
                 return True
 
         return False
@@ -285,14 +388,19 @@ class Player:
         self.face_dir = 1 # 오른쪽 방향
         self.jump = False
         self.jump_power = 0
+        self.attack = False
         self.state_machine = StateMachine(self)
         self.state_machine.start()
 
     def update(self):
         self.state_machine.update()
 
-    def handle_event(self, event):
-        self.state_machine.handle_event(('INPUT', event))
+    def handle_event(self, e):
+        if e.key == SDLK_x and (self.state_machine.cur_state == Attack1 or self.state_machine.cur_state == Attack2):
+            self.state_machine.handle_event(('ATTACK', e))
+            self.attack = True
+        else:
+            self.state_machine.handle_event(('INPUT', e))
 
     def draw(self):
         self.state_machine.draw()
