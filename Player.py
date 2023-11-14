@@ -41,7 +41,7 @@ def jump_end(e):
 
 time_out = lambda e : e[0] == 'TIME_OUT'
 next_attack = lambda e : e[0] == 'NEXT_ATTACK'
-
+life_end = lambda  e : e[0] == 'DEAD'
 
 PIXEL_PER_METER = (10.0 / 0.3) # 10 pixel 30 cm
 RUN_SPEED_KMPH = 20.0 # Km / Hour
@@ -332,9 +332,9 @@ class Dead:
     @staticmethod
     def draw(player):
         if (player.face_dir == 1):
-            player.image.clip_draw(int(player.frame) * 181, 0, 181, 139, player.x, player.y - (181 - 150))
+            player.image.clip_draw(int(player.frame) * 176, 0, 176, 66, player.x, player.y - (181 - 76))
         if player.face_dir == -1:
-            player.image.clip_composite_draw(int(player.frame) * 181, 0, 181, 139, 0, 'h', player.x, player.y - (181 - 150), 181, 139)
+            player.image.clip_composite_draw(int(player.frame) * 176, 0, 176, 66, 0, 'h', player.x, player.y - (181 - 76), 176, 66)
 
 
 class StateMachine:
