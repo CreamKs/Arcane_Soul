@@ -224,7 +224,8 @@ class Attack1:
 
     @staticmethod
     def exit(player, e):
-            pass
+        player.dir = 0
+
 
     @staticmethod
     def do(player):
@@ -260,7 +261,8 @@ class Attack2:
 
     @staticmethod
     def exit(player, e):
-            pass
+        player.dir = 0
+        pass
 
     @staticmethod
     def do(player):
@@ -296,7 +298,8 @@ class Attack3:
 
     @staticmethod
     def exit(player, e):
-            pass
+        player.dir = 0
+        pass
 
     @staticmethod
     def do(player):
@@ -390,7 +393,7 @@ class JumpAttackRun:
 
     @staticmethod
     def exit(player, e):
-            pass
+        player.dir = 0
 
     @staticmethod
     def do(player):
@@ -424,7 +427,8 @@ class Skill1:
         player.dir = 0
     @staticmethod
     def exit(player, e):
-            pass
+        player.dir = 0
+        pass
 
     @staticmethod
     def do(player):
@@ -457,7 +461,8 @@ class Skill2:
 
     @staticmethod
     def exit(player, e):
-            pass
+        player.dir = 0
+        pass
 
     @staticmethod
     def do(player):
@@ -520,6 +525,7 @@ class StateMachine:
 
 class Player:
     def __init__(self):
+        self.floor = 0
         self.x, self.y = 400, 100
         self.timer = 0
         self.frame = 0
@@ -543,3 +549,5 @@ class Player:
 
     def draw(self):
         self.state_machine.draw()
+    def get_bb(self):
+        return self.x - 50, self.y - 50, self.x + 50, self.y + 50

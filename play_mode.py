@@ -1,8 +1,12 @@
+import random
+
 from pico2d import *
 import game_framework
 
 import game_world
 from Player import Player
+
+from slime1 import Slime1
 
 
 def handle_events():
@@ -12,16 +16,22 @@ def handle_events():
             game_framework.quit()
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
             game_framework.quit()
+
         else:
             player.handle_event(event)
 
+
 def init():
-    global grass
     global player
-    global birds
 
     player = Player()
-    game_world.add_object(player, 1)
+    game_world.add_object(player, 2)
+    game_world.add_collision_pair('boy:ball', player, None)
+
+    slime = Slime1(300, 300)
+    game_world.add_object(slime, 2)
+    game_world.add_collision_pair('zombie:ball', slime, None)
+
 
 def finish():
     game_world.clear()
@@ -30,8 +40,7 @@ def finish():
 
 def update():
     game_world.update()
-    # delay(0.1)
-
+    game_world.handle_collisions()
 
 def draw():
     clear_canvas()
