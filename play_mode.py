@@ -26,7 +26,7 @@ def init():
 
     player = Player()
     game_world.add_object(player, 2)
-    game_world.add_collision_pair('boy:ball', player, None)
+    game_world.add_collision_pair('player:ball', player, None)
 
     slime = Slime1(300, 300)
     game_world.add_object(slime, 2)

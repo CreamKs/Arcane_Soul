@@ -1,11 +1,13 @@
 # 이것은 각 상태들을 객체로 구현한 것임.
 
-from pico2d import get_time, load_image, SDL_KEYDOWN, SDL_KEYUP, SDLK_SPACE, SDLK_LEFT, SDLK_RIGHT
+from pico2d import get_time, load_image, SDL_KEYDOWN, SDL_KEYUP, SDLK_SPACE, SDLK_LEFT, SDLK_RIGHT, draw_rectangle
 
 import Gravity
 import game_framework
 import game_world
 from sdl2 import SDLK_c, SDLK_x, SDLK_a, SDLK_s
+
+from attack import Attack
 
 
 # state event check
@@ -90,7 +92,7 @@ class Idle:
     def exit(player, e):
         if c_down(e):
             player.jump = True
-            player.jump_power = -10
+            player.jump_power = -15
             player.y += 10
         pass
 
@@ -128,7 +130,7 @@ class Run:
     def exit(player, e):
         if c_down(e):
             player.jump = True
-            player.jump_power = -10
+            player.jump_power = -15
             player.y += 10
             pass
 
@@ -215,6 +217,9 @@ class Attack1:
         global FRAMES_PER_ACTION
         FRAMES_PER_ACTION = 4
         player.frame = 0
+        player.vfx.setting(player.x, player.y)
+        game_world.add_object(player.vfx)
+
         player.attack = False
         player.image = load_image('Resource\Character\Attack1.png')
         if right_down(e) or left_up(e): # 오른쪽으로 RUN
@@ -225,6 +230,7 @@ class Attack1:
     @staticmethod
     def exit(player, e):
         player.dir = 0
+        game_world.remove_object(player.vfx)
 
 
     @staticmethod
@@ -362,8 +368,10 @@ class JumpAttack:
 
     @staticmethod
     def do(player):
-        player.frame = (player.frame + FRAMES_PER_ACTION * 0.2 / TIME_PER_ATTACK * game_framework.frame_time) % 4
-        if int(player.frame) == 2:
+        if int(player.frame) < 1:
+            player.frame = (player.frame + FRAMES_PER_ACTION * 0.5 / TIME_PER_ATTACK * game_framework.frame_time) % 4
+            player.timer = get_time()
+        if get_time() - player.timer > 1:
             player.state_machine.handle_event(('TIME_OUT', 0))
 
         if player.y < 90:
@@ -393,12 +401,13 @@ class JumpAttackRun:
 
     @staticmethod
     def exit(player, e):
-        player.dir = 0
-
+        pass
     @staticmethod
     def do(player):
-        player.frame = (player.frame + FRAMES_PER_ACTION * 0.5 / TIME_PER_ATTACK * game_framework.frame_time) % 4
-        if int(player.frame) == 2:
+        if int(player.frame) < 1:
+            player.frame = (player.frame + FRAMES_PER_ACTION * 0.5 / TIME_PER_ATTACK * game_framework.frame_time) % 4
+            player.timer = get_time()
+        if get_time() - player.timer > 1:
             player.state_machine.handle_event(('TIME_OUT', 0))
 
         if player.y < 90:
@@ -536,6 +545,7 @@ class Player:
         self.attack = False
         self.state_machine = StateMachine(self)
         self.state_machine.start()
+        self.vfx = Attack()
 
     def update(self):
         self.state_machine.update()
@@ -549,5 +559,7 @@ class Player:
 
     def draw(self):
         self.state_machine.draw()
+        draw_rectangle(*self.get_bb())
+
     def get_bb(self):
-        return self.x - 50, self.y - 50, self.x + 50, self.y + 50
+        return self.x - 60, self.y - 90, self.x + 60, self.y + 90
