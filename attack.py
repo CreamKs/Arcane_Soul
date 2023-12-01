@@ -12,9 +12,10 @@ class Attack:
         self.x = x
         self.y = y
 
-    def setting(self, x, y):
+    def setting(self, x, y, dmg = None):
         self.x = x
         self.y = y
+        self.dmg = dmg
 
     def draw(self):
         draw_rectangle(*self.get_bb())
@@ -23,11 +24,11 @@ class Attack:
         pass
 
     def get_bb(self):
-        return self.x - 60, self.y - 10, self.x + 60, self.y + 10
+        return self.x - 60, self.y - 60, self.x + 60, self.y + 60
 
     def handle_collision(self, group, other):
         match group:
-            case 'boy:ball':
-                game_world.remove_object(self)
-            case 'zombie:ball':
-                game_world.remove_object(self)
+            case 'attack:monster':
+                other.hp -= self.dmg
+                other.hp_per = int(other.hp / other.max_hp * 100)
+                pass

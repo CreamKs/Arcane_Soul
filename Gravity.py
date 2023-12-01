@@ -8,4 +8,4 @@ def Gravity_World(o):
         o.y -= o.jump_power * Player.RUN_SPEED_PPS * g * game_framework.frame_time
         o.jump_power += 0.1
     else:
-        o.y = 90
+        o.y = o.h

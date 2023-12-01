@@ -6,6 +6,8 @@ import math
 import Gravity
 import game_framework
 import game_world
+import Monster
+from Player import TIME_PER_ATTACK, time_out
 from behavior_tree import BehaviorTree, Action, Sequence, Condition, Selector
 import play_mode
 
@@ -22,72 +24,18 @@ TIME_PER_ACTION = 0.5
 ACTION_PER_TIME = 1.0 / TIME_PER_ACTION
 FRAMES_PER_ACTION = 8.0
 
-animation_names = ['Walk', 'Idle']
+animation_names = ['walk', 'attack']
 
-class Idle:
+attack = lambda e : e[0] == 'ATTACK'
 
-    @staticmethod
-    def enter(player, e):
-        global FRAMES_PER_ACTION
-
-        FRAMES_PER_ACTION = 11
-        player.image = load_image('Resource\Character\Idle.png')
-
-        pass
-
-    @staticmethod
-    def exit(player, e):
-        pass
-
-    @staticmethod
-    def do(player):
-       pass
-
-    @staticmethod
-    def draw(slime1):
-        if math.cos(slime1.dir) < 0:
-            Slime1.image.clip_composite_draw(int(slime1.frame) * slime1.imgx, 0, slime1.imgx, slime1.imgy, 0, 'h', slime1.x1,
-                                             slime1.y, 100, 100)
-        else:
-            Slime1.image.clip_draw(int(slime1.frame) * slime1.imgx, 0, slime1.imgx, slime1.imgy, slime1.x, slime1.y, 100, 100)
-
-class Idle:
-
-    @staticmethod
-    def enter(player, e):
-        global FRAMES_PER_ACTION
-
-        FRAMES_PER_ACTION = 8
-        player.image = load_image('Resource\Monster\walk1.png')
-        pass
-
-    @staticmethod
-    def exit(player, e):
-        pass
-
-    @staticmethod
-    def do(slime1):
-        slime1.frame = (slime1.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
-
-    pass
-
-    @staticmethod
-    def draw(slime1):
-        if math.cos(slime1.dir) < 0:
-            Slime1.image.clip_composite_draw(int(slime1.frame) * slime1.imgx, 0, slime1.imgx, slime1.imgy, 0, 'h', slime1.x1,
-                                             slime1.y, 100, 100)
-        else:
-            Slime1.image.clip_draw(int(slime1.frame) * slime1.imgx, 0, slime1.imgx, slime1.imgy, slime1.x, slime1.y, 100, 100)
 class Run:
-
     @staticmethod
-    def enter(player, e):
+    def enter(slime1, e):
         global FRAMES_PER_ACTION
 
         FRAMES_PER_ACTION = 8
-        player.image = load_image('Resource\Monster\walk1.png')
-
-        pass
+        slime1.frame = 0
+        slime1.state = 'walk'
 
     @staticmethod
     def exit(slime1, e):
@@ -95,55 +43,58 @@ class Run:
 
     @staticmethod
     def do(slime1):
+        if(slime1.x < play_mode.player.x):
+            slime1.dir = 1
+        if(slime1.x > play_mode.player.x):
+            slime1.dir = -1
         slime1.frame = (slime1.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 8
         slime1.x += slime1.dir * RUN_SPEED_PPS * game_framework.frame_time
-
+        if slime1.x < 50 or slime1.x > 1870:
+            slime1.x -= slime1.dir * RUN_SPEED_PPS * game_framework.frame_time
+        pass
 
     @staticmethod
     def draw(slime1):
-        if math.cos(slime1.dir) < 0:
-            Slime1.image.clip_composite_draw(int(slime1.frame) * slime1.imgx, 0, slime1.imgx, slime1.imgy, 0, 'h', slime1.x1,
-                                             slime1.y, 100, 100)
-        else:
-            Slime1.image.clip_draw(int(slime1.frame) * slime1.imgx, 0, slime1.imgx, slime1.imgy, slime1.x, slime1.y, 100, 100)
-
-
-class Attack:
-    @staticmethod
-    def enter(player, e):
-        global FRAMES_PER_ACTION
-
-        FRAMES_PER_ACTION = 8
-        player.image = load_image('Resource\Monster\walk1.png')
-
         pass
+
+
+class Attack1:
+    @staticmethod
+    def enter(slime1, e):
+        global FRAMES_PER_ACTION
+        FRAMES_PER_ACTION = 4
+        slime1.state = 'attack'
+        slime1.frame = 0
 
     @staticmethod
     def exit(slime1, e):
         pass
+
 
     @staticmethod
     def do(slime1):
         slime1.frame = (slime1.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % 5
-        slime1.x += slime1.dir * RUN_SPEED_PPS * game_framework.frame_time
+        if int(slime1.frame) == 4:
+            slime1.state_machine.handle_event(('TIME_OUT', 0))
+            play_mode.player.hp -= 10
+            play_mode.player.hp_per = int(play_mode.player.hp / play_mode.player.max_hp * 100)
+            play_mode.player.state_machine.handle_event(("HIT", 0))
+
+        pass
 
     @staticmethod
     def draw(slime1):
-        if math.cos(slime1.dir) < 0:
-            Slime1.image.clip_composite_draw(int(slime1.frame) * slime1.imgx, 0, slime1.imgx, slime1.imgy, 0, 'h',
-                                             slime1.x1, slime1.y, 100, 100)
-        else:
-            Slime1.image.clip_draw(int(slime1.frame) * slime1.imgx, 0, slime1.imgx, slime1.imgy, slime1.x, slime1.y,
-                                   100, 100)
+        pass
+
 
 
 class StateMachine:
     def __init__(self, slime1):
         self.slime1 = slime1
-        self.cur_state = Idle
+        self.cur_state = Run
         self.transitions = {
-            Idle,
-            Run
+            Run: {attack:Attack1},
+            Attack1: {time_out: Run}
         }
 
     def start(self):
@@ -155,11 +106,10 @@ class StateMachine:
 
     def handle_event(self, e):
         for check_event, next_state in self.transitions[self.cur_state].items():
-            self.cur_state.exit(self.slime1, e)
-            self.cur_state = next_state
-            self.cur_state.enter(self.slime1, e)
-            return True
-
+            if check_event(e):
+                self.cur_state.exit(self.slime1, e)
+                self.cur_state = next_state
+                self.cur_state.enter(self.slime1, e)
         return False
 
     def draw(self):
@@ -168,73 +118,63 @@ class StateMachine:
 
 
 class Slime1:
+    images = None
+    def load_images(self):
+        if Slime1.images == None:
+            Slime1.images = {}
+            for name in animation_names:
+                Slime1.images[name] = load_image("Resource/Monster/slime/" + name + "1.png")
 
-    def __init__(self, x=None, y=None):
-        self.x = x if x else random.randint(100, 1180)
-        self.y = 75
+    def __init__(self):
+        self.HPbar = load_image("Resource\HP\HPbar.png")
+        self.HPbase = load_image("Resource\HP\HPbase.png")
+
+        self.max_hp = 300
+        self.hp = 300
+        self.hp_per = 100
+        self.dmg = 10
+        self.x = random.randint(0, 1920)
+        self.y = 0
+        self.h = 50
         self.dir = 0.0      # radian 값으로 방향을 표시
         self.speed = 0.0
         self.frame = random.randint(0, 7)
-        self.state_machine = StateMachine(self)
-        self.state_machine.start()
-        Slime1.image = None
+        self.load_images()
         self.jump = False
         self.jump_power = 0
+        self.state = 'walk'
+        self.state_machine = StateMachine(self)
+        self.state_machine.start()
         self.imgx = 113
         self.imgy = 125
-        self.build_behavior_tree()
 
     def get_bb(self):
-        return self.x - 50, self.y - 50, self.x + 50, self.y + 50
+        return self.x - (self.imgx / 2), self.y - (self.imgy / 2), self.x + (self.imgx / 2), self.y + (self.imgy / 2)
 
 
     def update(self):
-        self.frame = (self.frame + FRAMES_PER_ACTION * ACTION_PER_TIME * game_framework.frame_time) % FRAMES_PER_ACTION
-        # fill here
-        self.bt.run()
+        self.state_machine.update()
+        if self.hp < 0:
+            game_world.remove_object(self)
+            game_world.remove_collision_object(self)
 
     def draw(self):
+        if self.dir == 1:
+            Slime1.images[self.state].clip_draw(int(self.frame) * self.imgx, 0, self.imgx, self.imgy, self.x, self.y)
+        if self.dir == -1:
+            Slime1.images[self.state].clip_composite_draw(int(self.frame) * self.imgx, 0, self.imgx, self.imgy, 0, 'h', self.x, self.y, self.imgx, self.imgy)
+        self.state_machine.draw()
         draw_rectangle(*self.get_bb())
+        self.HPbase.draw(self.x, self.y + 100, 100, 8)
+        self.HPbar.draw(self.x - (100 - self.hp_per) / 2, self.y + 100, self.hp_per, 8)
 
     def handle_event(self, event):
         pass
 
     def handle_collision(self, group, other):
-        pass
-
-
-    def distance_less_than(self, x1, x2, r):
-        distance2 = (x1 - x2) ** 2
-        return distance2 < (PIXEL_PER_METER * r) ** 2
-        pass
-
-    def move_slightly_to(self, tx):
-        self.dir = math.atan2(0, tx - self.x)
-        self.speed = RUN_SPEED_PPS
-        self.x += self.speed * math.cos(self.dir) * game_framework.frame_time
-        pass
-
-
-    def is_player_nearby(self, r):
-        if self.distance_less_than(play_mode.player.x, self.x, r):
-            return BehaviorTree.SUCCESS
-        else:
-            return BehaviorTree.FAIL
-
-    def move_to_player(self, r=0.5):
-        self.state = 'Walk'
-        self.move_slightly_to(play_mode.player.x)
-        if self.distance_less_than(play_mode.player.x, self.x, r):
-            return BehaviorTree.SUCCESS
-        else:
-            return BehaviorTree.RUNNING
-
-    def build_behavior_tree(self):
-        c1 = Condition('플레이어가 근처에 있는가?', self.is_player_nearby, 7)
-        a1 = Action('플레이어에게 접근', self.move_to_player)
-        root = SEQ_chase_player = Sequence('플레이어 추적', c1, a1)
-
-        root = SEL_near_or_not = Selector('소년이 주변에 존재 또는 비존재', SEQ_chase_player)
-
-        self.bt = BehaviorTree(root)
-        pass
+        match group:
+            case 'object:tile':
+                self.y += 120
+                self.jump = False
+            case 'player:monster':
+                self.state_machine.handle_event(('ATTACK', 0))
