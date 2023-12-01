@@ -41,7 +41,7 @@ def init():
     game_world.add_collision_pair('object:tile', player, None)
     game_world.add_collision_pair('player:monster', player, None)
 
-    Monster.Respawn()
+    #Monster.Respawn()
 
     background = BackGround()
     game_world.add_object(background, 0)
@@ -59,7 +59,7 @@ def finish():
 def update():
     global zen_timer
 
-    if zen_timer - get_time() > 30:
+    if get_time() - zen_timer > 30:
         Monster.Respawn()
         zen_timer = get_time()
 
