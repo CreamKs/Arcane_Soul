@@ -6,6 +6,7 @@ import Monster
 import game_framework
 
 import game_world
+import menu_mode
 from Player import Player
 
 from slime1 import Slime1
@@ -19,7 +20,9 @@ def handle_events():
         if event.type == SDL_QUIT:
             game_framework.quit()
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
-            game_framework.quit()
+            finish()
+            game_framework.change_mode(menu_mode)
+
 
         else:
             player.handle_event(event)
