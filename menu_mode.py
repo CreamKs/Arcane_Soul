@@ -7,6 +7,7 @@ import os
 from pico2d import *
 import game_framework
 import game_world
+import guide_mode
 
 import play_mode
 
@@ -46,12 +47,11 @@ def handle_events():
             game_framework.quit()
         elif event.type == SDL_KEYDOWN and event.key == SDLK_ESCAPE:
                 game_framework.quit()
-        elif event.type == SDL_KEYDOWN and event.key == SDLK_n:
+        elif event.type == SDL_KEYDOWN and event.key == SDLK_s:
             create_new_world()
             game_framework.change_mode(play_mode)
-        elif event.type == SDL_KEYDOWN and event.key == SDLK_l:
-            load_saved_world()
-            game_framework.change_mode(play_mode)
+        elif event.type == SDL_KEYDOWN and event.key == SDLK_g:
+            game_framework.change_mode(guide_mode)
 
 def update():
     pass

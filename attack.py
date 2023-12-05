@@ -18,7 +18,7 @@ class Attack:
         self.dmg = dmg
 
     def draw(self):
-        draw_rectangle(*self.get_bb())
+        pass
 
     def update(self):
         pass

@@ -7,6 +7,7 @@ import game_framework
 import game_world
 from sdl2 import SDLK_c, SDLK_x, SDLK_a, SDLK_s
 
+import over_mode
 from attack import Attack
 
 
@@ -46,12 +47,13 @@ def attack_down(e):
 def jump_end(e):
     return e[0] == 'JUMP_END'
 
-
 hit = lambda e : e[0] == 'HIT'
 dead = lambda e : e[0] == 'DEAD'
 time_out = lambda e : e[0] == 'TIME_OUT'
 next_attack = lambda e : e[0] == 'NEXT_ATTACK'
 life_end = lambda  e : e[0] == 'DEAD'
+idle_go = lambda  e : e[0] == 'IDLE_GO'
+run_go = lambda  e : e[0] == 'RUN_GO'
 
 PIXEL_PER_METER = (10.0 / 0.3) # 10 pixel 30 cm
 RUN_SPEED_KMPH = 20.0 # Km / Hour
@@ -229,14 +231,9 @@ class Attack1:
 
         player.attack = False
         player.image = load_image('Resource\Character\Attack1.png')
-        if right_down(e) or left_up(e): # 오른쪽으로 RUN
-            player.dir, player.face_dir, player.action = 1, 1, 1
-        elif left_down(e) or right_up(e): # 왼쪽으로 RUN
-            player.dir, player.face_dir, player.action = -1, -1, 0
 
     @staticmethod
     def exit(player, e):
-        player.dir = 0
         game_world.remove_object(player.vfx)
         game_world.remove_collision_object(player.vfx)
 
@@ -247,7 +244,11 @@ class Attack1:
             if player.attack:
                 player.state_machine.handle_event(('NEXT_ATTACK', 0))
             else:
-                player.state_machine.handle_event(('TIME_OUT', 0))
+                if player.dir == 0:
+                    player.state_machine.handle_event(('IDLE_GO', 0))
+                else:
+                    player.state_machine.handle_event(('RUN_GO', 0))
+
 
         pass
 
@@ -277,7 +278,6 @@ class Attack2:
 
     @staticmethod
     def exit(player, e):
-        player.dir = 0
         game_world.remove_object(player.vfx)
         game_world.remove_collision_object(player.vfx)
         pass
@@ -290,7 +290,10 @@ class Attack2:
             if player.attack:
                 player.state_machine.handle_event(('NEXT_ATTACK', 0))
             else:
-                player.state_machine.handle_event(('TIME_OUT', 0))
+                if player.dir == 0:
+                    player.state_machine.handle_event(('IDLE_GO', 0))
+                else:
+                    player.state_machine.handle_event(('RUN_GO', 0))
         pass
 
     @staticmethod
@@ -320,7 +323,6 @@ class Attack3:
 
     @staticmethod
     def exit(player, e):
-        player.dir = 0
         game_world.remove_object(player.vfx)
         game_world.remove_collision_object(player.vfx)
         pass
@@ -339,7 +341,10 @@ class Attack3:
             if player.attack:
                 player.state_machine.handle_event(('NEXT_ATTACK', 0))
             else:
-                player.state_machine.handle_event(('TIME_OUT', 0))
+                if player.dir == 0:
+                    player.state_machine.handle_event(('IDLE_GO', 0))
+                else:
+                    player.state_machine.handle_event(('RUN_GO', 0))
         pass
 
     @staticmethod
@@ -367,7 +372,10 @@ class Hit:
     @staticmethod
     def do(player):
         if float(get_time() - player.timer) > 0.05:
-            player.state_machine.handle_event(('TIME_OUT', 0))
+            if player.dir == 0:
+                player.state_machine.handle_event(('IDLE_GO', 0))
+            else:
+                player.state_machine.handle_event(('RUN_GO', 0))
         pass
 
     @staticmethod
@@ -490,7 +498,6 @@ class Skill1:
         game_world.add_collision_pair('attack:monster',player.vfx, None)
     @staticmethod
     def exit(player, e):
-        player.dir = 0
         game_world.remove_object(player.vfx)
         game_world.remove_collision_object(player.vfx)
         pass
@@ -526,7 +533,6 @@ class Skill2:
         player.frame = 0
         player.attack = False
         player.image = load_image('Resource\Character\Skill3.png')
-        player.dir = 0
 
 
         player.vfx.setting(player.x + player.face_dir * 100, player.y, player.dmg * 1.2)
@@ -543,7 +549,10 @@ class Skill2:
     def do(player):
         player.frame = (player.frame + FRAMES_PER_ACTION * 0.5 / TIME_PER_ATTACK * game_framework.frame_time) % 6
         if player.frame > 5:
-            player.state_machine.handle_event(('TIME_OUT', 0))
+            if player.dir == 0:
+                player.state_machine.handle_event(('IDLE_GO', 0))
+            else:
+                player.state_machine.handle_event(('RUN_GO', 0))
         pass
 
     @staticmethod
@@ -563,15 +572,15 @@ class StateMachine:
             Run: {right_down: Idle, left_down: Idle, right_up: Idle, left_up: Idle, c_down: JumpRun, x_down: Attack1, a_down: Skill1, s_down: Skill2, hit: Hit},
             Jump: {right_down: JumpRun, left_down: JumpRun, right_up: JumpRun, left_up: JumpRun, jump_end: Idle, x_down: JumpAttack, hit: Hit},
             JumpRun: {right_down: Jump, left_down: Jump, right_up: Jump, left_up: Jump, jump_end: Run, x_down: JumpAttackRun, hit: Hit},
-            Attack1: {time_out: Idle, next_attack: Attack2},
-            Attack2: {time_out: Idle, next_attack: Attack3},
-            Attack3: {time_out: Idle},
-            Hit: {time_out: Idle, dead: Dead},
+            Attack1: {idle_go: Idle, run_go: Run, next_attack: Attack2},
+            Attack2: {idle_go: Idle, run_go: Run, next_attack: Attack3},
+            Attack3: {idle_go: Idle, run_go: Run,},
+            Hit: {idle_go: Idle, run_go: Run, dead: Dead},
             Dead: {},
             JumpAttack: {right_down: JumpAttackRun, left_down: JumpAttackRun, right_up: JumpAttackRun, left_up: JumpAttackRun, time_out: Jump, jump_end: Idle},
             JumpAttackRun: {right_down: JumpAttack, left_down: JumpAttack, right_up: JumpAttack, left_up: JumpAttack,time_out: JumpRun, jump_end: Run},
-            Skill1: {time_out: Idle},
-            Skill2: {time_out: Idle}
+            Skill1: {time_out : Idle},
+            Skill2: {idle_go: Idle, run_go: Run,}
         }
 
     def start(self):
@@ -622,6 +631,8 @@ class Player:
         self.vfx = Attack()
 
     def update(self):
+        if self.hp < 0:
+            game_framework.change_mode(over_mode)
         self.state_machine.update()
 
     def handle_event(self, e):
@@ -636,7 +647,6 @@ class Player:
 
         self.HPbase.draw(self.x, self.y + 100, 100, 8)
         self.HPbar.draw(self.x - (100 - self.hp_per) / 2, self.y + 100, self.hp_per, 8)
-        draw_rectangle(*self.get_bb())
 
     def get_bb(self):
         return self.x - 60, self.y - 90, self.x + 60, self.y + 90

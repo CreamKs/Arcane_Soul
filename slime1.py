@@ -155,6 +155,7 @@ class Slime1:
     def update(self):
         self.state_machine.update()
         if self.hp < 0:
+            play_mode.background.score += 200
             game_world.remove_object(self)
             game_world.remove_collision_object(self)
 
@@ -164,7 +165,6 @@ class Slime1:
         if self.dir == -1:
             Slime1.images[self.state].clip_composite_draw(int(self.frame) * self.imgx, 0, self.imgx, self.imgy, 0, 'h', self.x, self.y, self.imgx, self.imgy)
         self.state_machine.draw()
-        draw_rectangle(*self.get_bb())
         self.HPbase.draw(self.x, self.y + 100, 100, 8)
         self.HPbar.draw(self.x - (100 - self.hp_per) / 2, self.y + 100, self.hp_per, 8)
 
